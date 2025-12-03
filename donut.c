@@ -2,6 +2,14 @@
 #include <math.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
+
+void resetColor(int sig) {
+    printf("\x1b[0m");
+    printf("\n");
+    exit(0);
+}
 
 float A = 0, B = 0;
 
@@ -29,8 +37,8 @@ void calculateForSurface(float theta, float phi, float* zBuffer, char* buffer) {
     float ooz = 1 / z;  // "One over z" for perspective projection
 
     // Project 3D coordinates onto 2D screen
-    int xp = (int)(width / 2 + K1 * ooz * x);
-    int yp = (int)(height / 2 - K1 * ooz * y);
+    int xp = (int)(width / 2 + K1 * ooz * 1.3 *x);
+    int yp = (int)(height / 2 - K1 * ooz * 0.7 * y);
 
     // Calculate luminance
     float L = cosPhi * cosTheta * sinB - cosA * cosTheta * sinPhi -
@@ -49,6 +57,7 @@ void calculateForSurface(float theta, float phi, float* zBuffer, char* buffer) {
 }
 
 int main() {
+    signal(SIGINT, resetColor);
     printf("\x1b[2J");  // Clear the screen
 
     float zBuffer[160 * 44];
@@ -65,15 +74,17 @@ int main() {
             }
         }
 
-        printf("\x1b[H");  // Reset cursor to the top-left
+        printf("\x1b[H\x1b[32m");  // Move cursor to top-left + set GREEN text
         for (int k = 0; k < width * height; k++) {
             putchar(k % width ? buffer[k] : '\n');
         }
+        printf("\x1b[0m"); // Reset color
 
         A += 0.04;
         B += 0.02;
         usleep(30000);
     }
+    printf("\x1b[0m"); // Reset color
 
     return 0;
 }
